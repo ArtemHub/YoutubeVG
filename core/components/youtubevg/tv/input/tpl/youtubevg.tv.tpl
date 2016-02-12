@@ -4,15 +4,16 @@
     {literal}
     Ext.onReady(function () {
         MODx.load({
-            xtype: 'panel',
+            xtype: 'container',
         {/literal}
             renderTo: 'youtubevg-{$tv->id}',
         {literal}
-            autoWidth: true,
-            width: '100%',
-            layout: 'fit',
+            layout: 'column',
             items: [{
-                xtype: 'modx-grid-youtubevg'
+                columnWidth: 100,
+                items: [{
+                    xtype: 'modx-grid-youtubevg',
+                }]
             }]
         });
     });

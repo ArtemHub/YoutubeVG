@@ -9,7 +9,7 @@ MODx.grid.YoutubeVG = function (config) {
                 records : [
                     { id : "Record 0", code : "0", image : "0", title : "0", desc : "0" },
                     { id : "Record 1", code : "1", image : "1", title : "1", desc : "0" },
-                    { id : "Record 2", code : "2", image : "1", title : "2", desc : "0" },
+                    { id : "Record 2", code : "2", image : "2", title : "2", desc : "0" },
                     { id : "Record 3", code : "3", image : "3", title : "3", desc : "0" },
                     { id : "Record 4", code : "4", image : "4", title : "4", desc : "0" },
                     { id : "Record 5", code : "5", image : "5", title : "5", desc : "0" },
@@ -18,27 +18,72 @@ MODx.grid.YoutubeVG = function (config) {
             },
             storeId: 'myStore',
             root: 'records',
-            idProperty: 'id'
+            idProperty: 'id',
+            remoteSort: false,
+            listeners: {
+                add: function(store, records, index) {
+                    console.log(this);
+                }
+            }
         })
-        ,width: '100%'
+        ,autoExpandColumn: 'title'
         ,autoHeight: true
+        ,enableDragDrop: true
+        ,ddGroup: 'youtubevg-grid'
+        ,ddText : 'Place this row.'
+        ,sm: new Ext.grid.RowSelectionModel({
+            singleSelect:true,
+        }),
+        listeners: {
+            "render": {
+                scope: this,
+                fn: function(grid) {
+                    var ddrow = new Ext.dd.DropTarget(grid.container, {
+                        ddGroup : 'youtubevg-grid',
+                        copy:false,
+                        notifyDrop : function(dd, e, data){
+
+                            var ds = grid.store;
+                            var sm = grid.getSelectionModel();
+                            var rows = sm.getSelections();
+                            if(dd.getDragData(e)) {
+                                var cindex=dd.getDragData(e).rowIndex;
+                                if(typeof(cindex) != "undefined") {
+                                    for(i = 0; i <  rows.length; i++) {
+                                        ds.remove(ds.getById(rows[i].id));
+                                    }
+                                    ds.insert(cindex,data.selections);
+                                    sm.clearSelections();
+                                }
+                            }
+                        }
+                    })
+                    // load the grid store
+                    // after the grid has been rendered
+                    //this.store.load();
+                }
+            }
+        }
         ,viewConfig:{
-            //scrollOffset: 0,
+            enableRowBody: false,
+            showPreview: false,
+            scrollOffset: 0,
+            emptyText: 'No items found',
             forceFit: false,
-            autoFill: true,
-            //autoExpandColumn: 'title'
+            autoFill: false
         }
         ,cm: new Ext.grid.ColumnModel({
             columns: [{
                 header: 'Название',
                 dataIndex: 'id',
-                width: 60
+                width: 100
             },{
                 header: 'Изображение',
                 dataIndex: 'image',
-                width: 60
+                width: 150
             },{
                 header: 'Описание',
+                id: 'title',
                 dataIndex: 'title',
             }],
             defaults: {
