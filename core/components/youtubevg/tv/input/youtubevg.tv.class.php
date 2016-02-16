@@ -7,6 +7,7 @@ if(!class_exists('YoutubeVGInputRender')) {
         }
         public function process($value,array $params = array()) {
             $this->modx->regClientStartupScript($this->modx->getOption('assets_url').'components/youtubevg/js/mgr/youtubevg.tv.js');
+            $this->modx->regClientCSS($this->modx->getOption('assets_url').'components/youtubevg/css/mgr/youtubevg.tv.css');
         }
     }
 }

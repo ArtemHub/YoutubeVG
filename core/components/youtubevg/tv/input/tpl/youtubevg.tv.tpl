@@ -1,22 +1,30 @@
-<div id="youtubevg-{$tv->id}" style="width: 100%;"></div>
+<input type="hidden" id="tv{$tv->id}" name="tv{$tv->id}" value='{$tv->value}' />
+<div id="youtubevg-{$tv->id}-div" style="overflow: hidden; width: 100%;"></div>
 <script type="text/javascript">
 
     {literal}
     Ext.onReady(function () {
+        var id = {/literal}{$tv->id}{literal}
+
         MODx.load({
-            xtype: 'container',
-        {/literal}
-            renderTo: 'youtubevg-{$tv->id}',
-        {literal}
-            layout: 'column',
+            xtype: 'panel',
+            applyTo: 'youtubevg-'+ id +'-div',
             items: [{
-                columnWidth: 100,
-                items: [{
-                    xtype: 'modx-grid-youtubevg',
-                }]
+                xtype: 'youtubevg-grid',
+                data: Ext.decode(Ext.get('tv'+ id).dom.value),
+                listeners: {
+                    change: function() {
+                        var data = this.store.getData();
+                        if(!data.length) {
+                            Ext.get('tv'+ id).dom.value = '';
+                        }
+                        else {
+                            Ext.get('tv'+id).dom.value = '{"records":' + Ext.encode(data) +'}';
+                        }
+                    }
+                }
             }]
         });
     });
     {/literal}
-
 </script>

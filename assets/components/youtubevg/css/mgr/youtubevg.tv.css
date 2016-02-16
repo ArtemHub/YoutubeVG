@@ -1,0 +1,30 @@
+.youtubevg-grid-buttons-wrapper {
+    display: block;
+    position: relative;
+    padding-top: 14px;
+    overflow: visible;
+}
+
+.youtubevg-action-button {
+    display: inline-block;
+}
+
+.youtubevg-action-button .icon {
+    cursor: pointer;
+}
+.youtubevg-action-button.play {
+    font-size: 40px;
+    color: #32aB9a;
+}
+.youtubevg-action-button.play .icon:hover {
+    color: #2b9385;
+}
+.youtubevg-action-button.remove {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 18px;
+}
+.youtubevg-action-button.remove:hover {
+    color: #d40606;
+}
