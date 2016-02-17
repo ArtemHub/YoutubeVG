@@ -1,25 +1,36 @@
 Ext.namespace('YoutubeVG');
 
-
 YoutubeVG.store = function(config) {
     Ext.applyIf(config, {
-        fields: ['code'],
-        root: 'records',
-        idProperty: 'code',
+        autoLoad: true,
+        proxy: new Ext.data.MemoryProxy(),
+        remoteSort: false,
+        idIndex: 0,
+        fields: [
+            {name: 'code'}
+        ]
     });
     YoutubeVG.store.superclass.constructor.call(this, config);
 };
-Ext.extend(YoutubeVG.store, Ext.data.JsonStore, {
+Ext.extend(YoutubeVG.store, Ext.data.ArrayStore, {
     getData: function() {
-        var records = this.getRange(),
-            data = [];
-        for(var i=0; i<records.length; ++i) {
-            data.push(records[i].data);
+        var result = [];
+        this.getRange().forEach(function(el, index) {
+            result.push(el.json);
+        });
+        return result;
+    },
+    loadData : function(data, append){
+        if(typeof(data) == 'string') {
+            var json = data; data = [];
+            Ext.decode(json).forEach(function(el, index, arr) {
+                data[index] = Object.keys(el).map(function(k) { return el[k] });
+            });
         }
-        return data;
+        console.log(data)
+        Ext.data.ArrayStore.superclass.loadData.call(this, data, append);
     }
 });
-
 
 
 YoutubeVG.toolbar = function(config) {
@@ -51,15 +62,15 @@ Ext.extend(YoutubeVG.toolbar, Ext.Toolbar, {
 });
 Ext.reg('youtubevg-grid-tbar', YoutubeVG.toolbar);
 
+
 YoutubeVG.grid = function (config) {
     config = config || {};
     var data = config.data || {"records": []};
+    data = '[{"code":"tntOCGkgt98"},{"code":"BrarLswFq08"},{"code":"HxM46vRJMZs"},{"code":"UIrEM_9qvZU"}]';
 
     Ext.applyIf(config, {
         fields: ['code']
-        ,store: new YoutubeVG.store({
-            data: data
-        })
+        ,store: new YoutubeVG.store()
         ,tbar: new YoutubeVG.toolbar()
         ,autoHeight: true
         ,hideHeaders: true
@@ -114,9 +125,19 @@ YoutubeVG.grid = function (config) {
     this.store.on('remove', this.onChange, this);
     this.on('render', this.ddEnable, this);
     this.on('click', this.onClick);
+
 };
 
 Ext.extend(YoutubeVG.grid, MODx.grid.LocalGrid, {
+    loadData: function () {
+        var data = Ext.get(this.sourseInputId).dom.value;
+        if(data == undefined || data == '' || !data) {
+            return;
+        }
+        else {
+            this.store
+        }
+    },
     ddEnable: function() {
         var grid = this;
         var ddrow = new Ext.dd.DropTarget(grid.container, {

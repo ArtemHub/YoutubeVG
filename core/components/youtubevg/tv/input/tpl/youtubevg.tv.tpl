@@ -11,7 +11,7 @@
             applyTo: 'youtubevg-'+ id +'-div',
             items: [{
                 xtype: 'youtubevg-grid',
-                data: Ext.decode(Ext.get('tv'+ id).dom.value),
+                sourseInputId: 'tv'+ id,
                 listeners: {
                     change: function() {
                         var data = this.store.getData();
@@ -19,7 +19,7 @@
                             Ext.get('tv'+ id).dom.value = '';
                         }
                         else {
-                            Ext.get('tv'+id).dom.value = '{"records":' + Ext.encode(data) +'}';
+                            Ext.get('tv'+id).dom.value = Ext.encode(data);
                         }
                     }
                 }
