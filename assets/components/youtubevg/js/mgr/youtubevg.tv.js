@@ -1,5 +1,6 @@
 Ext.namespace('YoutubeVG');
 
+/*
 YoutubeVG.store = function(config) {
     config = config || {};
 
@@ -35,7 +36,28 @@ Ext.extend(YoutubeVG.store, Ext.data.ArrayStore, {
         this.fireEvent('replace');
     }
 });
+*/
+YoutubeVG.store = function(inlineData, config) {
+    config = config || {};
 
+    Ext.applyIf(config, {
+        autoSave: false,
+        data: inlineData,
+        remoteSort: false,
+        idIndex: 0,
+        root: 'records',
+        idProperty: "code",
+        fields: ['code', 'title'],
+    });
+    YoutubeVG.store.superclass.constructor.call(this, config);
+    this.addEvents('replace');
+};
+Ext.extend(YoutubeVG.store, Ext.data.JsonStore, {
+    loadData: function(data, append) {
+        data = Ext.decode('{"records":' + data + '}');
+        YoutubeVG.store.superclass.loadData.call(this, data, append);
+    },
+});
 
 YoutubeVG.tbar = function(config) {
     config = config || {};
@@ -70,9 +92,11 @@ Ext.extend(YoutubeVG.tbar, Ext.Toolbar, {
 YoutubeVG.grid = function (config) {
     config = config || {};
 
+    var inlineData = config.linkedField.value || '[]';
+
     Ext.applyIf(config, {
         fields: ['code']
-        ,store: new YoutubeVG.store()
+        ,store: new YoutubeVG.store(inlineData)
         ,tbar: new YoutubeVG.tbar()
         ,autoHeight: true
         ,hideHeaders: true
@@ -122,14 +146,23 @@ YoutubeVG.grid = function (config) {
 
     YoutubeVG.grid.superclass.constructor.call(this, config);
     this.topToolbar.on('push', this.addVideo, this);
-    this.store.on('replace', this.setData, this);
-    this.on('click', this.onClick);
+    //this.store.on('replace', this.setData, this);
+    //this.on('click', this.onClick);
     this.on('afterrender', this.loadData, this);
-    this.on('render', this.initializeDragTarget, this);
-    this.on('render', this.initializeDropTarget, this);
+    //this.on('render', this.initializeDragTarget, this);
+    //this.on('render', this.initializeDropTarget, this);
 };
 
 Ext.extend(YoutubeVG.grid, MODx.grid.LocalGrid, {
+    loadData: function() {
+        //this.store.loadData(this.linkedInputField.value);
+        //var data = '[{"code":"test #1"},{"code":"test #2"},{"code":"test #3"}]';
+        //data = Ext.decode(data);
+        //console.log(data)
+        //this.store.load(data);
+    },
+
+
     initializeDragTarget: function(grid) {
         grid.dragZone = new Ext.grid.GridDragZone(grid, {
             ddGroup : grid.ddGroup,
@@ -166,9 +199,6 @@ Ext.extend(YoutubeVG.grid, MODx.grid.LocalGrid, {
             },
         });
     },
-    loadData: function() {
-        this.store.loadData(this.linkedInputField.value);
-    },
     setData: function() {
         var data = this.store.getData();
         this.linkedInputField.value = (!data.length) ? '' : Ext.encode(data);
@@ -204,10 +234,8 @@ Ext.extend(YoutubeVG.grid, MODx.grid.LocalGrid, {
             MODx.msg.alert('Warning!','Вы не указали код видео!');
             return false;
         }
-        var record = new this.store.recordType({
-            code: val
-        });
-        console.log(record)
+
+        console.log(this.store.reader.meta)
         this.store.add(record);
         this.setData();
     }
