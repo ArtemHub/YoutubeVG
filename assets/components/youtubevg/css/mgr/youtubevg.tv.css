@@ -28,3 +28,12 @@
 .youtubevg-action-button.remove:hover {
     color: #d40606;
 }
+
+.youtubevg-grow-disabled {
+}
+.youtubevg-grow-disabled.x-grid3-row-selected {
+    background: #fff;
+}
+.youtubevg-grow-disabled table {
+    opacity: 0.4;
+}

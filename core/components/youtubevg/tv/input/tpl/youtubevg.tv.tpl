@@ -11,18 +11,7 @@
             applyTo: 'youtubevg-'+ id +'-div',
             items: [{
                 xtype: 'youtubevg-grid',
-                sourseInputId: 'tv'+ id,
-                listeners: {
-                    change: function() {
-                        var data = this.store.getData();
-                        if(!data.length) {
-                            Ext.get('tv'+ id).dom.value = '';
-                        }
-                        else {
-                            Ext.get('tv'+id).dom.value = Ext.encode(data);
-                        }
-                    }
-                }
+                linkedInputField: Ext.get('tv'+id).dom,
             }]
         });
     });

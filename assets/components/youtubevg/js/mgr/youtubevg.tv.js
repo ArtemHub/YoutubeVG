@@ -1,16 +1,15 @@
 Ext.namespace('YoutubeVG');
 
 YoutubeVG.store = function(config) {
+    config = config || {};
+
     Ext.applyIf(config, {
-        autoLoad: true,
-        proxy: new Ext.data.MemoryProxy(),
         remoteSort: false,
         idIndex: 0,
-        fields: [
-            {name: 'code'}
-        ]
+        fields: ['code'],
     });
     YoutubeVG.store.superclass.constructor.call(this, config);
+    this.addEvents('replace');
 };
 Ext.extend(YoutubeVG.store, Ext.data.ArrayStore, {
     getData: function() {
@@ -20,25 +19,31 @@ Ext.extend(YoutubeVG.store, Ext.data.ArrayStore, {
         });
         return result;
     },
-    loadData : function(data, append){
-        if(typeof(data) == 'string') {
+    loadData: function(data, append) {
+        if(typeof(data) == 'string' && data.length) {
             var json = data; data = [];
             Ext.decode(json).forEach(function(el, index, arr) {
                 data[index] = Object.keys(el).map(function(k) { return el[k] });
             });
         }
-        console.log(data)
-        Ext.data.ArrayStore.superclass.loadData.call(this, data, append);
+        YoutubeVG.store.superclass.loadData.call(this, data, append);
+    },
+    replace: function(record, oldId, newId) {
+        this.remove(this.getById(oldId));
+        this.insert(newId, record);
+        console.log(this.getData())
+        this.fireEvent('replace');
     }
 });
 
 
-YoutubeVG.toolbar = function(config) {
+YoutubeVG.tbar = function(config) {
     config = config || {};
     Ext.applyIf(config, {
         items: [
             {
                 xtype: 'textfield',
+                value: 'tntOCGkgt98'
             },{
                 xtype: 'button',
                 text: '<i class="icon icon-plus"></i>',
@@ -49,10 +54,10 @@ YoutubeVG.toolbar = function(config) {
         ]
     });
 
-    YoutubeVG.toolbar.superclass.constructor.call(this, config);
+    YoutubeVG.tbar.superclass.constructor.call(this, config);
     this.addEvents('push');
 };
-Ext.extend(YoutubeVG.toolbar, Ext.Toolbar, {
+Ext.extend(YoutubeVG.tbar, Ext.Toolbar, {
     getValue: function() {
         return this.getComponent(0).getValue();
     }
@@ -60,23 +65,19 @@ Ext.extend(YoutubeVG.toolbar, Ext.Toolbar, {
         this.getComponent(0).setValue('');
     }
 });
-Ext.reg('youtubevg-grid-tbar', YoutubeVG.toolbar);
 
 
 YoutubeVG.grid = function (config) {
     config = config || {};
-    var data = config.data || {"records": []};
-    data = '[{"code":"tntOCGkgt98"},{"code":"BrarLswFq08"},{"code":"HxM46vRJMZs"},{"code":"UIrEM_9qvZU"}]';
 
     Ext.applyIf(config, {
         fields: ['code']
         ,store: new YoutubeVG.store()
-        ,tbar: new YoutubeVG.toolbar()
+        ,tbar: new YoutubeVG.tbar()
         ,autoHeight: true
         ,hideHeaders: true
         ,enableDragDrop: true
         ,ddGroup: 'youtubevg-grid'
-        ,ddText : 'Place this row.'
         ,sm: new Ext.grid.RowSelectionModel({
             singleSelect:true,
         })
@@ -121,45 +122,56 @@ YoutubeVG.grid = function (config) {
 
     YoutubeVG.grid.superclass.constructor.call(this, config);
     this.topToolbar.on('push', this.addVideo, this);
-    this.store.on('add', this.onChange, this);
-    this.store.on('remove', this.onChange, this);
-    this.on('render', this.ddEnable, this);
+    this.store.on('replace', this.setData, this);
     this.on('click', this.onClick);
-
+    this.on('afterrender', this.loadData, this);
+    this.on('render', this.initializeDragTarget, this);
+    this.on('render', this.initializeDropTarget, this);
 };
 
 Ext.extend(YoutubeVG.grid, MODx.grid.LocalGrid, {
-    loadData: function () {
-        var data = Ext.get(this.sourseInputId).dom.value;
-        if(data == undefined || data == '' || !data) {
-            return;
-        }
-        else {
-            this.store
-        }
+    initializeDragTarget: function(grid) {
+        grid.dragZone = new Ext.grid.GridDragZone(grid, {
+            ddGroup : grid.ddGroup,
+
+            onInitDrag : function(x, y){
+                var data = this.dragData;
+                var row = this.grid.getSelectionModel().getSelected(),
+                    index = this.grid.store.indexOfId(row.id),
+                    el = this.grid.getView().getRow(index);
+
+                //this.setDelta(150 , 10);
+
+                this.ddel = el.cloneNode(true);
+                this.proxy.update(this.ddel);
+            },
+        });
     },
-    ddEnable: function() {
-        var grid = this;
-        var ddrow = new Ext.dd.DropTarget(grid.container, {
-            ddGroup : 'youtubevg-grid',
+    initializeDropTarget: function(grid) {
+        grid.dropTarget = new Ext.dd.DropTarget(grid.getView().scroller, {
+            ddGroup : grid.ddGroup,
             copy:false,
+
             notifyDrop : function(dd, e, data){
                 var ds = grid.store;
                 var sm = grid.getSelectionModel();
-                var rows = sm.getSelections();
+                var row = sm.getSelected();
                 if(dd.getDragData(e)) {
-                    var cindex=dd.getDragData(e).rowIndex;
+                    var cindex = dd.getDragData(e).rowIndex;
                     if(typeof(cindex) != "undefined") {
-                        for(i = 0; i <  rows.length; i++) {
-                            ds.remove(ds.getById(rows[i].id));
-                        }
-                        ds.insert(cindex,data.selections);
+                        ds.replace(data.selections, row.id, cindex);
                         sm.clearSelections();
                     }
                 }
-            }
-        })
-        this.getView().refresh();
+            },
+        });
+    },
+    loadData: function() {
+        this.store.loadData(this.linkedInputField.value);
+    },
+    setData: function() {
+        var data = this.store.getData();
+        this.linkedInputField.value = (!data.length) ? '' : Ext.encode(data);
     },
     onClick: function(e){
         var t = e.getTarget();
@@ -184,9 +196,6 @@ Ext.extend(YoutubeVG.grid, MODx.grid.LocalGrid, {
         var record = this.getSelectionModel().getSelected();
         this.store.remove(record);
     },
-    onChange: function() {
-        this.fireEvent('change');
-    },
     addVideo: function() {
         var val = this.topToolbar.getValue();
         this.topToolbar.clearTextfield();
@@ -198,7 +207,9 @@ Ext.extend(YoutubeVG.grid, MODx.grid.LocalGrid, {
         var record = new this.store.recordType({
             code: val
         });
-        this.getStore().add(record);
+        console.log(record)
+        this.store.add(record);
+        this.setData();
     }
 });
 
